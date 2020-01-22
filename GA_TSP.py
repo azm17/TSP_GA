@@ -86,24 +86,30 @@ class Person():
         self.Route = Route
         self.fitness = -1
 
-def output_fitness_fig(max_generation, fitness_list):
+def output_fitness_fig(max_generation, fitness_list, fig_name):
     # 適応度の図を作成
-    plt.figure(figsize=(8, 8))
-    plt.xlabel('Generation', fontsize=20)
-    plt.ylabel('Total distance', fontsize=20)
-    plt.tick_params(labelsize=20)
-    plt.title('Fitness', fontsize=20)
+    plt.figure(figsize=(8,8), dpi=40)
+    plt.xlabel('Generation', fontsize=18)
+    plt.ylabel('Total distance', fontsize=18)
+    plt.tick_params(labelsize=18)
+    plt.rcParams["xtick.direction"] = "in"
+    plt.rcParams["ytick.direction"] = "in"
+    # plt.title('Fitness', fontsize=20)
     
     plt.ylim(350, 1100)
     plt.xlim(0, max_generation)
-    plt.plot([i for i in range(max_generation)], fitness_list)##fitnessの図を作成
-    
+    plt.plot([i for i in range(len(fitness_list))], 
+              fitness_list, 
+              linewidth = 10)##fitnessの図を作成
+    plt.savefig('./fig_fitness/{}'.format(fig_name))
+    plt.close()
+
     
 if __name__ == '__main__':
     random.seed(time.time())
     
     N = 30
-    max_generation = 100
+    max_generation = 300
     random.seed(random.randint(0, 100))
     
     # 初期RouteのN個生成
@@ -115,16 +121,28 @@ if __name__ == '__main__':
     
     fitness_list = []# min適応度リスト for figure
     min_fitness = 10000# 適応度が最も良いもの
+    fig_num = 0#図の数，名前用
     for num_gen in range(max_generation):
         print('generation {}'.format(num_gen))
-        
+        person_num = 0
         #個体ごとに適応度計算
         for person in population:
-            fitness = TSP.TSP(person.Route, False)
+            if person_num % 6 == 0:
+                fitness = TSP.TSP(person.Route, True, num_gen, person_num, fig_num, 'graph')
+            else:
+                fitness = TSP.TSP(person.Route, False, num_gen, person_num, fig_num, 'graph')
+            
             person.fitness = fitness
             if min_fitness > fitness:
                 min_fitness = fitness
                 min_Route = person.Route
+                min_num_gen = num_gen
+                min_person_num = person_num
+            if person_num % 6 == 0:
+                # fitness = TSP.TSP(person.Route, True, min_num_gen, person_num, fig_num)
+                TSP.TSP(min_Route, True, min_num_gen, min_person_num, fig_num, 'graph_best')
+                fig_num += 1
+            person_num += 1
         
         random.seed(time.time())
         fitness_list.append(np.mean([person.fitness for person in population]))
@@ -136,11 +154,11 @@ if __name__ == '__main__':
             new_Route_list.append(_tournamentSelection())
         new_Route_list = change_list(new_Route_list)#交叉と突然変異したあとのRoute_list
         population = [Person(Route) for Route in new_Route_list]# 次のpopulation
-    
+        output_fitness_fig(max_generation, fitness_list, f'{num_gen}.png')
     # 最も良かった結果を出力
-    TSP.TSP(min_Route, True)
+    # TSP.TSP(min_Route, True, min_num_gen, min_person_num, 10000)
     print()
     print(f'Result\n Minimum Length: {min_fitness}')
     
-    output_fitness_fig(max_generation, fitness_list)
+    output_fitness_fig(max_generation, fitness_list, 'min.png')
 

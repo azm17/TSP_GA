@@ -23,16 +23,16 @@ def calculate_length(node_i, node_j):
     result = math.sqrt((node_i.x - node_j.x)**2 + (node_i.y - node_j.y)**2)
     return result
 
-def plot_Route(Node_list, L):
+def plot_Route(Node_list, L, gen, ind, length_Route, fig_num, directory):
     x = []; y = []
-    plt.figure(figsize=(8, 8))
+    plt.figure(figsize=(8, 8), dpi=40)
     width = 10
     plt.ylim(-width, L + width); plt.xlim(-width, L + width)
     plt.xticks(color="None")
     plt.yticks(color="None")
-    plt.title('Traveling Salesman Problem',  fontsize=20)
+    plt.title('Traveling Salesman Problem', fontsize=20)
+    plt.text(0, 90, 'Generation:{:2}\nIndividual:{:3}\nLength: {:4}'.format(gen, ind, round(length_Route)), fontsize=20)
     plt.tick_params(length = 0)
-    
     for node in Node_list:
         x.append(node.x); y.append(node.y)
     x.append(Node_list[0].x); y.append(Node_list[0].y)
@@ -42,13 +42,16 @@ def plot_Route(Node_list, L):
         plt.plot(node.x, 
                  node.y, 
                  marker='o', 
-                 markersize=15)
+                 markersize=15,
+                 color='green')
 
         plt.annotate(node.num, 
                      xy=(node.x, node.y), 
                      size = 25)
-    
-def TSP(Route, Bool):
+    plt.savefig('./{}/{}.png'.format(directory, fig_num))
+    plt.close()
+
+def TSP(Route, Bool, generation, individual, fig_num, directory):
     L = 100
     NumberOfNode = len(Route)
     length_Route = 0
@@ -59,10 +62,7 @@ def TSP(Route, Bool):
     random.shuffle(point_list)
     
     Node_list = [Node(i, point_list.pop()) \
-                 for i in range(NumberOfNode)]
-    
-    # for n in Node_list: n.print_profile()
-    
+                 for i in range(NumberOfNode)]    
     
     i = 0
     while(True):
@@ -73,11 +73,21 @@ def TSP(Route, Bool):
     Node_lsit_2 = []
     for i in range(len(Node_list)):
         Node_lsit_2.append(Node_list[Route[i]])
-    if Bool: plot_Route(Node_lsit_2, L)
+    if Bool: plot_Route(Node_lsit_2, L, generation, individual, length_Route, fig_num, directory)
     
     return length_Route
 
 if __name__ == "__main__":
     Route = [i for i in range(20)]
-    fitness = TSP(Route, True)
+    generation = 1
+    individual = 1
+    fig_num = 1
+    directory = 'graph'
+    fitness = TSP(Route, 
+                  True, 
+                  generation, 
+                  individual,
+                  fig_num,
+                  directory)
+    
     print('result: {}'.format(fitness))

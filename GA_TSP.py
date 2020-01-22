@@ -88,7 +88,7 @@ class Person():
 
 def output_fitness_fig(max_generation, fitness_list, fig_name):
     # 適応度の図を作成
-    plt.figure(figsize=(8,8), dpi=40)
+    plt.figure(figsize=(8,8), dpi=80)
     plt.xlabel('Generation', fontsize=18)
     plt.ylabel('Total distance', fontsize=18)
     plt.tick_params(labelsize=18)

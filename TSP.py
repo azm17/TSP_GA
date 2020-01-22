@@ -25,7 +25,7 @@ def calculate_length(node_i, node_j):
 
 def plot_Route(Node_list, L, gen, ind, length_Route, fig_num, directory):
     x = []; y = []
-    plt.figure(figsize=(8, 8), dpi=40)
+    plt.figure(figsize=(8, 8), dpi=80)
     width = 10
     plt.ylim(-width, L + width); plt.xlim(-width, L + width)
     plt.xticks(color="None")

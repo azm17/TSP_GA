@@ -7,7 +7,6 @@ Created on Thu Jan 23 01:55:41 2020
 import cv2
 
 for i in range(1500):
-    print(i//5)
     im1 = cv2.imread('fig_fitness/{}.png'.format(i//5))
     
     image_name = f'{i}.png'

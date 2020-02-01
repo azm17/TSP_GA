@@ -20,21 +20,27 @@ class Node:
         print('ID:{} (x,y)=({:2},{:2})'.format(self.num, self.x, self.y))
 
 class TSP:
-    def __init__(self, route, ind_num):
-        self.ind_num = ind_num # 個体番号
-        self.route = route # 点を回る順番[0, 1, 2, ...]
-        
+    def __init__(self, route, ind_num, generation):
         # 都市が存在する領域を指定 width * height
-        self.width = 100 # 領域の広さ (0, wide)
-        self.height = 100 # 領域の広さ (0, high)
+        width = 100  # 領域の広さ (0, wide)
+        height = 100 # 領域の広さ (0, high)
         
-        self.seed = 1   # シード値を固定，都市の位置が毎回バラバラににならないように
-        self.node_list = self.__generate_node() # 都市を生成
+        self.width = width
+        self.height = height
+        
+        seed = 1     # シード値を固定，都市の位置が毎回バラバラににならないように
+        
+        self.ind_num = ind_num       # 個体番号
+        self.generation = generation # 世代数
+        self.route = route           # 巡回する順番[0, 1, 2, ...]
+        
+        # 都市を生成
+        self.node_list = self.__generate_node(width, height, seed)
         
     # ノードを生成
-    def __generate_node(self):
-        random.seed(self.seed)
-        tmp_node_xy = [(i,j) for i, j in itertools.product([i for i in range(self.width)], [i for i in range(self.height)])]
+    def __generate_node(self, width, height, seed):
+        random.seed(seed)
+        tmp_node_xy = [(i,j) for i, j in itertools.product([i for i in range(width)], [i for i in range(height)])]
         
         node_list = [Node(i, node_xy) for i, node_xy in enumerate(random.sample(tmp_node_xy, len(self.route)))]
         return node_list
@@ -58,9 +64,7 @@ class TSP:
     
     # 図を表示する
     def plot_route(self):
-        margin = 10
-        gen = 0
-        ind = 0
+        margin = 10 # 図の外枠（余白）
         x = []
         y = []
         
@@ -70,25 +74,31 @@ class TSP:
         plt.xticks(color = "None")
         plt.yticks(color = "None")
         plt.title('Traveling Salesman Problem', fontsize = 20)
-        plt.text(0, 90, 'Generation:{:2}\nIndividual:{:3}\nLength: {:4}'.format(gen, ind, round(self.cal_total_distanse())), fontsize = 20)
+        plt.text(0, 90, 'Generation:{:2}\nIndividual:{:3}\nLength: {:4}'\
+                 .format(self.generation, self.ind_num, round(self.cal_total_distanse())), fontsize = 20)
         plt.tick_params(length = 0)
         
         for node in self.node_list:
+            plt.plot(node.x, node.y, marker = 'o', markersize = 15, color = 'green')
+            plt.annotate(node.num, xy = (node.x, node.y), size = 25)
+        
+        node_list_sorted = []# 巡回順にノードを並べる
+        for i in range(len(self.node_list)):
+            node_list_sorted.append(self.node_list[self.route[i]])
+        
+        for node in node_list_sorted:
             x.append(node.x)
             y.append(node.y)
-        x.append(self.node_list[0].x)
-        y.append(self.node_list[0].y)
+        x.append(node_list_sorted[0].x)
+        y.append(node_list_sorted[0].y)
         plt.plot(x, y)
         
-        for node in self.node_list:
-            plt.plot(node.x, node.y, marker = 'o', markersize = 15, color = 'green')
-        
 if __name__ == "__main__":
-    #random.seed()
+    # random.seed()
     route = [i for i in range(20)]
-    #random.shuffle(route)
-    
+    # random.shuffle(route)
+    generation = 0
     individual_number = 0
-    tsp = TSP(route, individual_number)
+    tsp = TSP(route, individual_number, generation)
     print(tsp.cal_total_distanse())
-    # tsp.plot_route()
+    tsp.plot_route()

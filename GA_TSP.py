@@ -1,168 +1,156 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
-Created on Wed Jan 22 16:47:07 2020
+Created on Sat Feb  1 00:03:40 2020
 
-@author: 81808
+@author: Azumi Mamiya
 """
 import time
 import random
-import copy
-import TSP
-import matplotlib.pyplot as plt
-import numpy as np
-def OX (a,b):#順序交差半分片親からもう半分片親からの相対的な順序を受け継ぐ
-    copy_a=copy.copy(a)
-    copy_b=copy.copy(b)
-    next_list_a=[]
-    next_list_b=[]
-    num=0
-    for i in a:
-        num+=1
-        if num<=len(a)//2 :
-            next_list_a.append(i)
-            copy_b.remove(i)
-    next_list_a[len(next_list_a):len(next_list_a)]=copy_b
-    num=0     
-    for j in b:
-         num+=1
-         if num<=len(b)//2:
-             pass
-         else:
-             next_list_b.append(j)
-             copy_a.remove(j)
-    copy_a.extend(next_list_b)
-    return next_list_a, copy_a
+import TSP as tsp
 
-def swap(a):
-    num1=0
-    num2=0
-    while num1==num2:
-        num1=(random.randint(0, len(a)-1))
-        num2=(random.randint(0, len(a)-1))
-    add1=copy.copy(a[num1])
-    add2=copy.copy(a[num2])
-    a.pop(num1)
-    a.insert(num1,add2)
-    a.pop(num2)
-    a.insert(num2,add1)
+class Route:# 経路クラス
+    def __init__(self, number, route):
+        self.number = number # 個体番号
+        self.route = route   # 経路
+        self.fitness = None    # 適応度
     
-    return a
-def _tournamentSelection():
-    num1=0
-    num2=0
-    while num1==num2:
-        num1=(random.randint(0, N-1))
-        num2=(random.randint(0, N-1))
+    def print_route(self):
+        print(f"ID:{self.number} {self.route}")
+        print(f"fitness: {self.fitness}")
     
-    if population[num1].fitness < population[num2].fitness:
-        return population[num1].Route
-    else:
-        return population[num2].Route
-
-def change_list(temp):
-    for k in range(len(temp)):
-        if random.random()>0.4:
-            num1=0
-            num2=0
-            while num1==num2:
-                num1=(random.randint(0, N-1))
-                num2=(random.randint(0, N-1))
-            
-            add1,add2=OX(temp[num1], temp[num2])
-            temp.pop(num1)
-            temp.insert(num1,add2)
-            temp.pop(num2)
-            temp.insert(num2,add1)
+class GeneticAlgorithm:
+    def __init__(self, n_node, N, max_generation):
+        self.N = N # 個体数
+        self.max_generation = max_generation # 世代数の最大値
+        self.route_list = self.__generate_route(n_node, N) # 経路クラス生成
+    
+    # ランダムな集団（ルート）生成
+    def __generate_route(self, n_node, N):
+        tmp_route_list = [[i for i in range(n_node)] for j in range(N)]
+        for route in tmp_route_list:
+            random.shuffle(route) # 経路シャッフル
         
-        if random.random()>0.9:
-            num3=(random.randint(0, N-1))
-            add3=swap(temp[num3])
-            temp.pop(num3)
-            temp.insert(num3,add3)
-    return temp
-    
-class Person():
-    def __init__(self, Route):
-        self.Route = Route
-        self.fitness = -1
-
-def output_fitness_fig(max_generation, fitness_list, fig_name):
-    # 適応度の図を作成
-    plt.figure(figsize=(8,8), dpi=50)
-    plt.xlabel('Generation', fontsize=18)
-    plt.ylabel('Total distance', fontsize=18)
-    plt.tick_params(labelsize=18)
-    plt.rcParams["xtick.direction"] = "in"
-    plt.rcParams["ytick.direction"] = "in"
-    # plt.title('Fitness', fontsize=20)
-    
-    plt.ylim(350, 1100)
-    plt.xlim(0, max_generation)
-    plt.plot([i for i in range(len(fitness_list))], 
-              fitness_list, 
-              linewidth = 10)##fitnessの図を作成
-    plt.savefig('./fig_fitness/{}'.format(fig_name))
-    plt.close()
-
-    
-if __name__ == '__main__':
-    while(True):
-        random.seed(time.time())
+        route_list = [Route(j, route) for j, route in enumerate(tmp_route_list)]
         
-        N = 30
-        max_generation = 300
-        random.seed(random.randint(0, 100))
+        return route_list  
+    
+    # 新しい集団（ルート）生成
+    def __set_route(self, tmp_route_list):#
+        route_list = [Route(j, route) for j, route in enumerate(tmp_route_list)]
+        self.route_list = route_list
         
-        # 初期RouteのN個生成
-        Route_list = [[i for i in range(20)] for j in range(N)]
-        random.shuffle(Route_list)
-        for l in Route_list: random.shuffle(l)# シャッフル
-        # 初期RouteのN個を基に集団生成
-        population = [Person(Route) for Route in Route_list]# 初期の集団作成
+    # 適応度計算
+    def __calculate_fitness(self, route_class, generation):
+        individual_number = route_class.number
+        route = route_class.route
+        t = tsp.TSP(route, individual_number, generation)
+        result = t.cal_total_distanse()
         
-        fitness_list = []# min適応度リスト for figure
-        min_fitness = 10000# 適応度が最も良いもの
-        fig_num = 0#図の数，名前用
-        for num_gen in range(max_generation):
-            print('generation {}'.format(num_gen))
-            person_num = 0
-            #個体ごとに適応度計算
-            for person in population:
-                if person_num % 6 == 0:
-                    fitness = TSP.TSP(person.Route, True, num_gen, person_num, fig_num, 'graph')
-                else:
-                    fitness = TSP.TSP(person.Route, False, num_gen, person_num, fig_num, 'graph')
+        return result
+    
+    # 選択
+    def __selection(self):
+        num1 = random.randint(0, self.N - 1)
+        num2 = random.randint(0, self.N - 1)
+        
+        if self.route_list[num1].fitness > self.route_list[num2].fitness:
+            return self.route_list[num2].route
+        else:
+            return self.route_list[num1].route
+    
+    # 交叉
+    def __crossover(self):
+        for n in range(self.N):
+            if random.random() < 0.6:
+                num = random.randint(0, self.N - 1)
                 
-                person.fitness = fitness
-                if min_fitness > fitness:
-                    min_fitness = fitness
-                    min_Route = person.Route
-                    min_num_gen = num_gen
-                    min_person_num = person_num
-                if person_num % 6 == 0:
-                    # fitness = TSP.TSP(person.Route, True, min_num_gen, person_num, fig_num)
-                    TSP.TSP(min_Route, True, min_num_gen, min_person_num, fig_num, 'graph_best')
-                    fig_num += 1
-                person_num += 1
+                n_node = len(self.route_list[n].route)//2 # ノード数
+                
+                if random.random() < 0.5:
+                    route1 = self.route_list[n].route[:n_node]
+                    route2 = sorted(self.route_list[n].route[n_node:], 
+                                    key=self.route_list[num].route.index)
+                else:
+                    route1 = sorted(self.route_list[n].route[:n_node], 
+                                    key=self.route_list[num].route.index)
+                    route2 = self.route_list[n].route[n_node:]
+                
+                next_list = route1 + route2
+                
+                self.route_list[n].route = next_list
             
-            random.seed(time.time())
-            fitness_list.append(np.mean([person.fitness for person in population]))
-            print('min: {}'.format(min([person.fitness for person in population])))
+    # 突然変異
+    def __mutation(self):
+        for n in range(self.N):
+            if random.random() < 0.1:
+                n_node = len(self.route_list[0].route)
+                
+                num1 = random.randint(0, n_node - 1)
+                num2 = random.randint(0, n_node - 1)
+                
+                tmp1 = self.route_list[n].route[num1]
+                tmp2 = self.route_list[n].route[num2]
+                
+                self.route_list[n].route.pop(num1)
+                self.route_list[n].route.insert(num1, tmp2)
+                self.route_list[n].route.pop(num2)
+                self.route_list[n].route.insert(num2, tmp1)
+        
+    # 経路表示    
+    def print_route(self):
+        print("---output_population---")
+        for i in range(len(self.route_list)):
+            print(f"ID:{i:2d} Fitness: {self.route_list[i].fitness}\n{self.route_list[i].route}")
+    
+    # 遺伝的アルゴリズムを実行
+    def run_evolve(self):
+        for generation in range(self.max_generation):
+            # 個体0の適応度計算
+            self.route_list[0].fitness = self.__calculate_fitness(self.route_list[0], generation)
+            sum_fitness = self.route_list[0].fitness # 適応度の合計
+            min_fitness = self.route_list[0].fitness # 集団におけるBestな適応度
+            route_class_min_fitness = self.route_list[0] #　集団におけるBestな経路
+            
+            # 個体1以降の適応度計算
+            for route_class in self.route_list[1:]:
+                route_class.fitness = self.__calculate_fitness(route_class, generation)
+                random.seed(time.time())
+                sum_fitness += route_class.fitness
+                
+                if min_fitness > route_class.fitness:
+                    min_fitness = route_class.fitness
+                    route_class_min_fitness = route_class
+            
+            ave_fitness = sum_fitness / len(self.route_list)
+            
+            # self.print_route()
+            print(f"--Result--\nFitness\nAverage: {ave_fitness}\nMinimum: {min_fitness}")
             
             # 次のpopulationを作る
-            new_Route_list = []# 
-            for num in range(N):
-                new_Route_list.append(_tournamentSelection())
-            new_Route_list = change_list(new_Route_list)#交叉と突然変異したあとのRoute_list
-            population = [Person(Route) for Route in new_Route_list]# 次のpopulation
-            output_fitness_fig(max_generation, fitness_list, f'{num_gen}.png')
-        # 最も良かった結果を出力
-        # TSP.TSP(min_Route, True, min_num_gen, min_person_num, 10000)
-        print()
-        print(f'Result\n Minimum Length: {min_fitness}')
-        
-        output_fitness_fig(max_generation, fitness_list, 'min.png')
-        
-        if min_fitness < 419:
-            break
+            # 選択
+            new_route_list = []
+            for i in range(self.N):
+                new_route_list.append(self.__selection())
+            
+            self.__set_route(new_route_list) # 新しいRouteオブジェクト生成
+            self.__crossover()               # 巡回路の交叉
+            self.__mutation()                # 突然変異
+            
+            print()
+    
+        return route_class_min_fitness.route
 
+if __name__ == '__main__':
+    n_node = 20 # ノードの数
+    population_size = 35
+    max_generation = 5000
+    GA = GeneticAlgorithm(n_node, population_size, max_generation)
+    best_route = GA.run_evolve()
+    
+    # 最終結果　表示
+    print(best_route)
+    t = tsp.TSP(best_route, 0, 0)
+    print(t.cal_total_distanse())
+    t.plot_route()
+    
+    
